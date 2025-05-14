@@ -1,0 +1,9 @@
+services: 
+  postgres:
+    image: postgres
+    container_name: base-nestjs
+    ports: 
+      - "5532:5432"
+    environment: 
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=nestjs-drizzle
