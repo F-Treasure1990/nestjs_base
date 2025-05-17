@@ -1,42 +1,63 @@
+import { IGlobalResponse } from '@/common/types';
 import {
+  ArgumentsHost,
   Catch,
   ExceptionFilter,
-  ArgumentsHost,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { FastifyReply, FastifyRequest } from 'fastify';
 
+export interface IExceptionFilter extends IGlobalResponse {
+  error?: string | object;
+  message?: string;
+}
+
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
-  catch(exception: unknown, host: ArgumentsHost) {
+  catch(exception: HttpException | Error, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<FastifyReply>();
     const request = ctx.getRequest<FastifyRequest>();
 
-    const status =
+    const statusCode =
       exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
     // Handle the response data more carefully
-    let message: string | object = 'Internal server error';
+    let _error: string | object = { message: 'Internal Server Error' };
+
     if (exception instanceof HttpException) {
       const exceptionResponse = exception.getResponse();
-      message =
+      _error =
         typeof exceptionResponse === 'object'
-          ? exceptionResponse
-          : { message: exceptionResponse };
+          ? { ...exceptionResponse }
+          : { _error: exceptionResponse };
     } else if (exception instanceof Error) {
-      message = exception.message;
+      _error = { message: exception.message };
     }
 
-    // json can be used instead of send(fastify)
-    response.status(status).send({
-      statusCode: status,
-      timestamp: new Date().toISOString(),
+    const errorResponse: IExceptionFilter = {
+      success: false,
+      statusCode,
+      method: request.method,
       path: request.url,
-      ...(typeof message === 'object' ? message : { message }),
-    });
+      timestamp: new Date().toISOString(),
+      ..._error,
+    };
+
+    // json can be used instead of send(fastify)
+    response.status(statusCode).send(errorResponse);
+
+    const _error_log = `[GlobalException] ${new Intl.DateTimeFormat('en-GB', {
+      dateStyle: 'short',
+      timeStyle: 'medium',
+      hour12: true,
+    })
+      .format(new Date())
+      .toUpperCase()}   ERROR [GlobalException] ${exception.name}: ${exception.message}`;
+    // Still logs to terminal
+    console.error(_error_log);
   }
 }

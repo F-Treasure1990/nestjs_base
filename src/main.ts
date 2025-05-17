@@ -1,11 +1,12 @@
 import { GlobalExceptionFilter } from '@/common/exceptions/global.exception';
-import { CustomZodValidationPipe } from '@/common/pipes/customZodValidation.pipe';
+import { GlobalReponseInterceptor } from '@/common/interceptors/global-response.interceptor';
+import { GlobalZodValidationPipe } from '@/common/pipes/global-zod-validation.pipe';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const globalPrefix = 'api/v1';
@@ -16,10 +17,12 @@ async function bootstrap() {
   );
 
   // Register the validation pipe
-  app.useGlobalPipes(new CustomZodValidationPipe());
+  app.useGlobalPipes(new GlobalZodValidationPipe());
 
   // Register the exception filters
   app.useGlobalFilters(new GlobalExceptionFilter());
+
+  app.useGlobalInterceptors(new GlobalReponseInterceptor());
 
   // Set Global Prefix
   app.setGlobalPrefix(globalPrefix);

@@ -1,33 +1,44 @@
+import { UserMapper } from '@/user/user.mapper';
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserService } from './user.service';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly userMapper: UserMapper,
+  ) {}
 
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+  async create(@Body() createUserDto: CreateUserDto) {
+    const user = await this.userService.create(createUserDto);
+    return this.userMapper.omit(user);
   }
 
   @Get()
   findAll() {
-    return this.userService.findAll();
+    const users = this.userService.findAll();
+    return this.userMapper.omit(users);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return {
+      response: this.userService.findOne(id),
+      message: 'User Fetched Successfully',
+    };
   }
 
   @Patch(':id')
@@ -37,6 +48,8 @@ export class UserController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
+    // throw new Error('Method not implemented.');
+    throw new UnauthorizedException('Method not implemented.');
     return this.userService.remove(+id);
   }
 }
