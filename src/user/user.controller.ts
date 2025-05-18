@@ -13,6 +13,7 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserService } from './user.service';
+import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 
 @Controller('user')
 export class UserController {
@@ -28,17 +29,16 @@ export class UserController {
   }
 
   @Get()
+  @ResponseMessage('Users Fetched Successfully')
   findAll() {
     const users = this.userService.findAll();
     return this.userMapper.omit(users);
   }
 
   @Get(':id')
+  @ResponseMessage('User Fetched Successfully')
   findOne(@Param('id', ParseIntPipe) id: number) {
-    return {
-      response: this.userService.findOne(id),
-      message: 'User Fetched Successfully',
-    };
+    return this.userService.findOne(id);
   }
 
   @Patch(':id')

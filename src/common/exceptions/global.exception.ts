@@ -14,8 +14,10 @@ export interface IExceptionFilter extends IGlobalResponse {
 }
 
 @Catch()
-export class GlobalExceptionFilter implements ExceptionFilter {
-  catch(exception: HttpException | Error, host: ArgumentsHost) {
+export class GlobalExceptionFilter<T extends HttpException>
+  implements ExceptionFilter
+{
+  catch(exception: T | Error, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<FastifyReply>();
     const request = ctx.getRequest<FastifyRequest>();
